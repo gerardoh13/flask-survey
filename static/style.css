@@ -1,0 +1,19 @@
+body {
+    background-color: rgb(31, 80, 69);
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#displayDiv {
+    border: solid;
+    width: 572px;
+    background-color: whitesmoke;
+    text-align: center;
+    margin-top: 30px;
+}
+
+button {
+    margin-bottom: 15px;
+}
