@@ -1,13 +1,19 @@
 {% extends "base.html" %} 
 {% block title %} questions {% endblock %} 
 {% block content %}
-    <h1>{{curr_q.question}}</h1>
+    <h1>{{idx + 1}}. {{curr_q.question}}</h1>
     <form action="/answer" method="POST" id="qForm">
     {% for choice in curr_q.choices %}
     <label for="question">{{choice}}</label>
-    <input type="radio" name="answer" value={{choice}} class="radios">
+    <input type="radio" name="answer" value="{{choice}}" class="radios">
     <br/>
     {% endfor %}
+    {% if curr_q.allow_text %}
+    <br/>
+    <textarea name="comment"></textarea>
+    <br/>
+    {% endif %}
+    <input type="hidden" name="idx" value={{idx}}>
     <br/>
     <button class="btn btn-secondary" id="next" >Next</button>
     </form>
