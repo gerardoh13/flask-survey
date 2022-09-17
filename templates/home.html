@@ -1,13 +1,8 @@
 {% extends "base.html" %} 
 {% block title %} Home {% endblock %} 
 {% block content %}
-{% if selected %}
-    <h1>{{survey.title}}</h1>
-    <h2>{{survey.instructions}}</h2>
-    <a class="btn btn-secondary"href="/questions/0"> Start!</a>
-    {% else %}
     <h1>Please select a Survey</h1>
-    <form action="/survey" id="surveyForm">
+    <form action="/survey" method="POST" id="surveyForm">
         <select name="survey" id="surveySelect">
             <option value="">Select a survey</option>
             {% for survey in surveys.keys() %}
@@ -16,5 +11,4 @@
         </select>
         <button>Go!</button>
     </form>
-    {% endif %}
 {% endblock %}

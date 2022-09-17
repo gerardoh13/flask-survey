@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, redirect, flash, session
+from functools import reduce
+from flask import Flask, request, render_template, redirect, flash, session, make_response
 from flask_debugtoolbar import DebugToolbarExtension
 from surveys import surveys
 
@@ -9,28 +10,37 @@ app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 debug = DebugToolbarExtension(app)
 
-responses = []
-curr_survey = {}
-session['curr_survey'] = {}
-
 @app.route('/')
 def show_homepage():
-    selected_surv = not not curr_survey
-    return render_template('home.html', survey=curr_survey, surveys=surveys, selected=selected_surv)
+    return render_template('home.html', surveys=surveys)
 
-@app.route('/survey')
+
+@app.route('/start')
+def show_instructions():
+    survey = surveys[session['curr_survey']]
+    return render_template('start.html', survey=survey)
+
+
+@app.route('/survey', methods=["POST"])
 def set_survey():
-    survey = request.args['survey']
+    survey = request.form['survey']
+    print(survey)
 
-    global curr_survey
-    curr_survey = surveys[survey]
-    responses.clear()
-    for q in surveys["satisfaction"].questions:
-        responses.append(None)
-    return redirect("/")
+    if request.cookies.get(f"completed_{survey}"):
+        print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+        flash("You've already completed that survey!")
+        return redirect('/')
+    session['curr_survey'] = survey
+    session['responses'] = []
+    for q in surveys[survey].questions:
+        session['responses'].append(None)
+    return redirect("/start")
+
 
 @app.route('/questions/<int:q_idx>')
 def show_questions(q_idx):
+    curr_survey = surveys[session['curr_survey']]
+    responses = session['responses']
     if None in responses:
         index = responses.index(None)
     elif None not in responses and len(responses) >= 1:
@@ -52,15 +62,17 @@ def show_questions(q_idx):
 
 @app.route('/answer', methods=['POST'])
 def get_answer():
-
+    curr_survey = surveys[session['curr_survey']]
+    responses = session['responses']
     answ = request.form['answer']
     idx = int(request.form['idx'])
-    
+
     if curr_survey.questions[idx].allow_text:
         comment = request.form['comment']
         responses[idx] = (answ, comment)
     else:
         responses[idx] = answ
+    session['responses'] = responses
 
     if (responses[-1] != None):
         return redirect("/complete")
@@ -70,16 +82,27 @@ def get_answer():
 
 @app.route('/complete')
 def show_completion():
+    if 'curr_survey' not in session or session['curr_survey'] == '':
+        return redirect('/')
+    else:
+        curr_survey = surveys[session['curr_survey']]
+        responses = session['responses']
+
     if None in responses:
         index = responses.index(None)
         flash('Please complete the survey')
         return redirect(f"/questions/{index}")
     else:
-        return render_template('complete.html', responses=responses, questions=curr_survey.questions, length=len(responses))
+        html = render_template('complete.html', responses=responses,
+                               questions=curr_survey.questions, length=len(responses))
+        res = make_response(html)
+        res.set_cookie(f"completed_{session['curr_survey']}", "yes", max_age=60)
+
+        return res
+
 
 @app.route('/clear')
 def clear_vars():
-    responses.clear()
-    global curr_survey
-    curr_survey = {}
+    session['responses'] = []
+    session['curr_survey'] = ""
     return redirect("/")
