@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, flash
+from flask import Flask, request, render_template, redirect, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from surveys import surveys
 
@@ -11,7 +11,7 @@ debug = DebugToolbarExtension(app)
 
 responses = []
 curr_survey = {}
-
+session['curr_survey'] = {}
 
 @app.route('/')
 def show_homepage():
